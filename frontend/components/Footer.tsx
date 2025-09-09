@@ -72,13 +72,13 @@ const Footer = () => {
                 <span>info@visionguard.co.id</span>
               </a>
               <a 
-                href="https://instagram.com/visionguard.official"
+                href="https://www.instagram.com/vision_guard.id?igsh=MWUyeXd2b3Z5ZGo1cw=="
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 hover:text-[#22C55E] transition-colors"
               >
                 <Instagram className="h-4 w-4 flex-shrink-0" />
-                <span>@visionguard.official</span>
+                <span>@vision_guard.id</span>
               </a>
             </div>
           </div>

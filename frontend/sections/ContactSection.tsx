@@ -116,7 +116,7 @@ const ContactSection = () => {
                 </a>
 
                 <a 
-                  href="https://instagram.com/visionguard.official"
+                  href="https://www.instagram.com/vision_guard.id?igsh=MWUyeXd2b3Z5ZGo1cw=="
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-pink-500/10 transition-colors"
@@ -126,7 +126,7 @@ const ContactSection = () => {
                   </div>
                   <div>
                     <div className="font-semibold text-[#0B2C5F]">Instagram</div>
-                    <div className="text-gray-600">@visionguard.official</div>
+                    <div className="text-gray-600">@vision_guard.id</div>
                   </div>
                 </a>
               </div>
@@ -272,6 +272,15 @@ const ContactSection = () => {
             >
               <Mail className="mr-2 h-5 w-5" />
               Kirim Email
+            </a>
+            <a
+              href="https://www.instagram.com/vision_guard.id?igsh=MWUyeXd2b3Z5ZGo1cw=="
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-pink-500 hover:bg-pink-500/90 text-white px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
+            >
+              <Instagram className="mr-2 h-5 w-5" />
+              Follow Instagram
             </a>
           </div>
         </div>
