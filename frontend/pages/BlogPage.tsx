@@ -2,15 +2,15 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight } from 'lucide-react';
-import backend from '~backend/client';
+import { getPublishedPosts } from '../lib/blog';
 
 const BlogPage = () => {
-  const { data: blogData, isLoading } = useQuery({
+  const { data: posts = [], isLoading } = useQuery({
     queryKey: ['published-blog-posts'],
-    queryFn: () => backend.cms.listPublishedBlogPosts(),
+    queryFn: getPublishedPosts,
   });
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -47,9 +47,9 @@ const BlogPage = () => {
         </div>
 
         {/* Blog Posts Grid */}
-        {blogData?.posts && blogData.posts.length > 0 ? (
+        {posts.length > 0 ? (
           <div className="grid gap-8">
-            {blogData.posts.map((post) => (
+            {posts.map((post) => (
               <article 
                 key={post.id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
@@ -57,7 +57,7 @@ const BlogPage = () => {
                 <div className="p-8">
                   <div className="flex items-center text-sm text-gray-500 mb-3">
                     <Calendar className="h-4 w-4 mr-2" />
-                    <time>{formatDate(post.createdAt)}</time>
+                    <time>{formatDate(post.created_at)}</time>
                   </div>
                   
                   <h2 className="text-2xl font-bold text-[#0B2C5F] mb-4 hover:text-[#0B2C5F]/80 transition-colors">

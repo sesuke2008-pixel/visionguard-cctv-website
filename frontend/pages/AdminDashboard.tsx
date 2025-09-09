@@ -1,15 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Shield, FileText, Star, Briefcase, HelpCircle, MessageSquare, Menu, X } from 'lucide-react';
+import { Shield, FileText, Star, Briefcase, HelpCircle, MessageSquare, Menu, X, LogOut } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import BlogManager from '../components/admin/BlogManager';
 import TestimonialManager from '../components/admin/TestimonialManager';
 import PortfolioManager from '../components/admin/PortfolioManager';
 import FAQManager from '../components/admin/FAQManager';
 import ContactManager from '../components/admin/ContactManager';
+import AdminLogin from './AdminLogin';
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('admin-logged-in') === 'true';
+    setIsLoggedIn(loggedIn);
+  }, []);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin-logged-in');
+    setIsLoggedIn(false);
+    toast({ title: "Logout", description: "Anda telah logout dari admin panel" });
+  };
+
+  if (!isLoggedIn) {
+    return <AdminLogin onLogin={handleLogin} />;
+  }
 
   const navigation = [
     { name: 'Blog Posts', href: '/admin/blog', icon: FileText },
@@ -70,14 +93,21 @@ const AdminDashboard = () => {
               })}
             </nav>
 
-            {/* Back to Site */}
-            <div className="px-4 py-4 border-t border-gray-200">
+            {/* Footer */}
+            <div className="px-4 py-4 border-t border-gray-200 space-y-2">
               <Link
                 to="/"
                 className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 ← Kembali ke Website
               </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <LogOut className="h-4 w-4 mr-3" />
+                Logout
+              </button>
             </div>
           </div>
         </div>

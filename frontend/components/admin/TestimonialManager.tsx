@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, Star } from 'lucide-react';
-import backend from '~backend/client';
-import type { Testimonial, CreateTestimonialRequest, UpdateTestimonialRequest } from '~backend/cms/testimonials';
+import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from '../../lib/testimonials';
+import type { Testimonial } from '../../lib/supabase';
 
 const TestimonialManager = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
-  const [formData, setFormData] = useState<CreateTestimonialRequest>({
+  const [formData, setFormData] = useState({
     name: '',
     company: '',
     content: '',
@@ -21,13 +21,13 @@ const TestimonialManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: testimonialsData, isLoading } = useQuery({
+  const { data: testimonials = [], isLoading } = useQuery({
     queryKey: ['admin-testimonials'],
-    queryFn: () => backend.cms.listTestimonials(),
+    queryFn: getTestimonials,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateTestimonialRequest) => backend.cms.createTestimonial(data),
+    mutationFn: createTestimonial,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-testimonials'] });
       resetForm();
@@ -40,7 +40,7 @@ const TestimonialManager = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateTestimonialRequest) => backend.cms.updateTestimonial(data),
+    mutationFn: ({ id, ...data }: { id: number } & Partial<Testimonial>) => updateTestimonial(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-testimonials'] });
       resetForm();
@@ -53,7 +53,7 @@ const TestimonialManager = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => backend.cms.deleteTestimonial({ id }),
+    mutationFn: deleteTestimonial,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-testimonials'] });
       toast({ title: "Sukses", description: "Testimoni berhasil dihapus" });
@@ -86,7 +86,7 @@ const TestimonialManager = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingTestimonial) {
-      updateMutation.mutate({ ...formData, id: editingTestimonial.id });
+      updateMutation.mutate({ id: editingTestimonial.id, ...formData });
     } else {
       createMutation.mutate(formData);
     }
@@ -114,7 +114,7 @@ const TestimonialManager = () => {
     ));
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -212,9 +212,9 @@ const TestimonialManager = () => {
                 </div>
               ))}
             </div>
-          ) : testimonialsData?.testimonials && testimonialsData.testimonials.length > 0 ? (
+          ) : testimonials.length > 0 ? (
             <div className="space-y-4">
-              {testimonialsData.testimonials.map((testimonial) => (
+              {testimonials.map((testimonial) => (
                 <div key={testimonial.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -227,7 +227,7 @@ const TestimonialManager = () => {
                       )}
                       <p className="text-gray-700 mb-2">"{testimonial.content}"</p>
                       <p className="text-xs text-gray-400">
-                        Dibuat: {formatDate(testimonial.createdAt)}
+                        Dibuat: {formatDate(testimonial.created_at)}
                       </p>
                     </div>
                     

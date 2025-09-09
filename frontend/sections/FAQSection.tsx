@@ -2,14 +2,14 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import backend from '~backend/client';
+import { getFAQs } from '../lib/faqs';
 
 const FAQSection = () => {
   const [openItems, setOpenItems] = React.useState<number[]>([]);
 
-  const { data: faqData, isLoading } = useQuery({
+  const { data: faqs = [], isLoading } = useQuery({
     queryKey: ['faqs'],
-    queryFn: () => backend.cms.listFAQs(),
+    queryFn: getFAQs,
   });
 
   const toggleItem = (id: number) => {
@@ -43,9 +43,9 @@ const FAQSection = () => {
               </div>
             ))}
           </div>
-        ) : faqData?.faqs && faqData.faqs.length > 0 ? (
+        ) : faqs.length > 0 ? (
           <div className="space-y-4">
-            {faqData.faqs.map((faq) => (
+            {faqs.map((faq) => (
               <Collapsible
                 key={faq.id}
                 open={openItems.includes(faq.id)}

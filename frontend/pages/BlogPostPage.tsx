@@ -2,18 +2,18 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, ArrowLeft } from 'lucide-react';
-import backend from '~backend/client';
+import { getPostBySlug } from '../lib/blog';
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   
-  const { data: postData, isLoading, error } = useQuery({
+  const { data: post, isLoading, error } = useQuery({
     queryKey: ['blog-post', slug],
-    queryFn: () => backend.cms.getBlogPost({ slug: slug! }),
+    queryFn: () => getPostBySlug(slug!),
     enabled: !!slug,
   });
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -48,7 +48,7 @@ const BlogPostPage = () => {
     );
   }
 
-  if (error || !postData) {
+  if (error || !post) {
     return (
       <div className="pt-20 min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -72,8 +72,6 @@ const BlogPostPage = () => {
     );
   }
 
-  const post = postData.post;
-
   return (
     <div className="pt-20 min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -96,7 +94,7 @@ const BlogPostPage = () => {
           
           <div className="flex items-center text-gray-500 mb-6">
             <Calendar className="h-4 w-4 mr-2" />
-            <time>{formatDate(post.createdAt)}</time>
+            <time>{formatDate(post.created_at)}</time>
           </div>
 
           {post.excerpt && (

@@ -1,1 +1,0 @@
-{"id": "visionguard-cctv-website-4gf2", "lang": "typescript"}

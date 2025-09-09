@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Building, Home, Store, Warehouse, School, Calendar } from 'lucide-react';
-import backend from '~backend/client';
+import { getPortfolioProjects } from '../lib/portfolio';
 
 const PortfolioSection = () => {
-  const { data: portfolioData, isLoading } = useQuery({
+  const { data: projects = [], isLoading } = useQuery({
     queryKey: ['portfolio-projects'],
-    queryFn: () => backend.cms.listPortfolioProjects(),
+    queryFn: getPortfolioProjects,
   });
 
   const getProjectIcon = (type: string) => {
@@ -27,7 +27,7 @@ const PortfolioSection = () => {
     }
   };
 
-  const formatDate = (date: Date | null | undefined) => {
+  const formatDate = (date: string | null | undefined) => {
     if (!date) return '';
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
@@ -59,10 +59,10 @@ const PortfolioSection = () => {
               </div>
             ))}
           </div>
-        ) : portfolioData?.projects && portfolioData.projects.length > 0 ? (
+        ) : projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {portfolioData.projects.slice(0, 6).map((project) => {
-              const Icon = getProjectIcon(project.projectType);
+            {projects.slice(0, 6).map((project) => {
+              const Icon = getProjectIcon(project.project_type);
               return (
                 <div 
                   key={project.id}
@@ -86,24 +86,24 @@ const PortfolioSection = () => {
                     )}
 
                     <div className="space-y-2 text-sm text-gray-500">
-                      {project.clientName && (
+                      {project.client_name && (
                         <div className="flex items-center">
                           <span className="font-medium mr-2">Klien:</span>
-                          <span>{project.clientName}</span>
+                          <span>{project.client_name}</span>
                         </div>
                       )}
                       
-                      {project.cameraCount && (
+                      {project.camera_count && (
                         <div className="flex items-center">
                           <span className="font-medium mr-2">Kamera:</span>
-                          <span>{project.cameraCount} unit</span>
+                          <span>{project.camera_count} unit</span>
                         </div>
                       )}
                       
-                      {project.completionDate && (
+                      {project.completion_date && (
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2" />
-                          <span>{formatDate(project.completionDate)}</span>
+                          <span>{formatDate(project.completion_date)}</span>
                         </div>
                       )}
                     </div>
@@ -111,7 +111,7 @@ const PortfolioSection = () => {
                     {/* Project Type Badge */}
                     <div className="mt-4">
                       <span className="inline-block bg-[#22C55E]/10 text-[#22C55E] px-3 py-1 rounded-full text-xs font-medium">
-                        {project.projectType}
+                        {project.project_type}
                       </span>
                     </div>
                   </div>

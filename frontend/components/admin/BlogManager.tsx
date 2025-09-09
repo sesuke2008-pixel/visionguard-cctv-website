@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
-import backend from '~backend/client';
-import type { BlogPost, CreateBlogPostRequest, UpdateBlogPostRequest } from '~backend/cms/blog';
+import { getAllPosts, createPost, updatePost, deletePost } from '../../lib/blog';
+import type { BlogPost } from '../../lib/supabase';
 
 const BlogManager = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [formData, setFormData] = useState<CreateBlogPostRequest>({
+  const [formData, setFormData] = useState({
     title: '',
     slug: '',
     excerpt: '',
@@ -22,13 +22,13 @@ const BlogManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: blogData, isLoading } = useQuery({
+  const { data: posts = [], isLoading } = useQuery({
     queryKey: ['admin-blog-posts'],
-    queryFn: () => backend.cms.listAllBlogPosts(),
+    queryFn: getAllPosts,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateBlogPostRequest) => backend.cms.createBlogPost(data),
+    mutationFn: createPost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
       resetForm();
@@ -41,7 +41,7 @@ const BlogManager = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateBlogPostRequest) => backend.cms.updateBlogPost(data),
+    mutationFn: ({ id, ...data }: { id: number } & Partial<BlogPost>) => updatePost(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
       resetForm();
@@ -54,7 +54,7 @@ const BlogManager = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => backend.cms.deleteBlogPost({ id }),
+    mutationFn: deletePost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
       toast({ title: "Sukses", description: "Post berhasil dihapus" });
@@ -98,7 +98,7 @@ const BlogManager = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingPost) {
-      updateMutation.mutate({ ...formData, id: editingPost.id });
+      updateMutation.mutate({ id: editingPost.id, ...formData });
     } else {
       createMutation.mutate(formData);
     }
@@ -116,7 +116,7 @@ const BlogManager = () => {
     setIsCreating(true);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -223,9 +223,9 @@ const BlogManager = () => {
                 </div>
               ))}
             </div>
-          ) : blogData?.posts && blogData.posts.length > 0 ? (
+          ) : posts.length > 0 ? (
             <div className="space-y-4">
-              {blogData.posts.map((post) => (
+              {posts.map((post) => (
                 <div key={post.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -244,7 +244,7 @@ const BlogManager = () => {
                         <p className="text-gray-600 mt-2">{post.excerpt}</p>
                       )}
                       <p className="text-xs text-gray-400 mt-2">
-                        Dibuat: {formatDate(post.createdAt)}
+                        Dibuat: {formatDate(post.created_at)}
                       </p>
                     </div>
                     

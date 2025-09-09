@@ -2,15 +2,15 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, BookOpen } from 'lucide-react';
-import backend from '~backend/client';
+import { getPublishedPosts } from '../lib/blog';
 
 const BlogSection = () => {
-  const { data: blogData, isLoading } = useQuery({
+  const { data: posts = [], isLoading } = useQuery({
     queryKey: ['published-blog-posts-home'],
-    queryFn: () => backend.cms.listPublishedBlogPosts(),
+    queryFn: getPublishedPosts,
   });
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -42,10 +42,10 @@ const BlogSection = () => {
               </div>
             ))}
           </div>
-        ) : blogData?.posts && blogData.posts.length > 0 ? (
+        ) : posts.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              {blogData.posts.slice(0, 3).map((post) => (
+              {posts.slice(0, 3).map((post) => (
                 <article 
                   key={post.id}
                   className="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
@@ -59,7 +59,7 @@ const BlogSection = () => {
                   <div className="p-6">
                     <div className="flex items-center text-sm text-gray-500 mb-3">
                       <Calendar className="h-4 w-4 mr-2" />
-                      <time>{formatDate(post.createdAt)}</time>
+                      <time>{formatDate(post.created_at)}</time>
                     </div>
                     
                     <h3 className="text-xl font-bold text-[#0B2C5F] mb-3 line-clamp-2">

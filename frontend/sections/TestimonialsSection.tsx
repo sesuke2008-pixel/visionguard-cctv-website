@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Star, Quote } from 'lucide-react';
-import backend from '~backend/client';
+import { getTestimonials } from '../lib/testimonials';
 
 const TestimonialsSection = () => {
-  const { data: testimonialsData, isLoading } = useQuery({
+  const { data: testimonials = [], isLoading } = useQuery({
     queryKey: ['testimonials'],
-    queryFn: () => backend.cms.listTestimonials(),
+    queryFn: getTestimonials,
   });
 
   const renderStars = (rating: number) => {
@@ -44,9 +44,9 @@ const TestimonialsSection = () => {
               </div>
             ))}
           </div>
-        ) : testimonialsData?.testimonials && testimonialsData.testimonials.length > 0 ? (
+        ) : testimonials.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonialsData.testimonials.slice(0, 6).map((testimonial) => (
+            {testimonials.slice(0, 6).map((testimonial) => (
               <div 
                 key={testimonial.id}
                 className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300 relative"

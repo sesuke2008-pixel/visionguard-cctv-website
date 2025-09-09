@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Phone, Mail, Instagram, MapPin, Clock } from 'lucide-react';
-import backend from '~backend/client';
+import { createContactSubmission } from '../lib/contact';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -39,11 +39,11 @@ const ContactSection = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await backend.cms.submitContact(formData);
+      await createContactSubmission(formData);
       
       toast({
         title: "Berhasil!",
-        description: response.message,
+        description: "Terima kasih! Kami akan segera menghubungi Anda.",
       });
 
       // Reset form

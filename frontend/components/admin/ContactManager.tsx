@@ -1,15 +1,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, Phone, Mail, MessageSquare } from 'lucide-react';
-import backend from '~backend/client';
+import { getContactSubmissions } from '../../lib/contact';
 
 const ContactManager = () => {
-  const { data: contactData, isLoading } = useQuery({
+  const { data: submissions = [], isLoading } = useQuery({
     queryKey: ['admin-contacts'],
-    queryFn: () => backend.cms.listContactSubmissions(),
+    queryFn: getContactSubmissions,
   });
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -34,9 +34,9 @@ const ContactManager = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-[#0B2C5F]">Contact Submissions</h1>
-        {contactData?.submissions && (
+        {submissions && (
           <div className="text-sm text-gray-600">
-            Total: {contactData.submissions.length} submission{contactData.submissions.length !== 1 ? 's' : ''}
+            Total: {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
           </div>
         )}
       </div>
@@ -55,9 +55,9 @@ const ContactManager = () => {
                 </div>
               ))}
             </div>
-          ) : contactData?.submissions && contactData.submissions.length > 0 ? (
+          ) : submissions.length > 0 ? (
             <div className="space-y-6">
-              {contactData.submissions.map((submission) => (
+              {submissions.map((submission) => (
                 <div key={submission.id} className="border rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center space-x-3">
@@ -70,7 +70,7 @@ const ContactManager = () => {
                         </h3>
                         <div className="flex items-center text-sm text-gray-500">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(submission.createdAt)}
+                          {formatDate(submission.created_at)}
                         </div>
                       </div>
                     </div>
@@ -135,26 +135,26 @@ const ContactManager = () => {
       </div>
 
       {/* Quick Stats */}
-      {contactData?.submissions && contactData.submissions.length > 0 && (
+      {submissions.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
             <div className="text-2xl font-bold text-[#22C55E] mb-2">
-              {contactData.submissions.length}
+              {submissions.length}
             </div>
             <div className="text-gray-600 text-sm">Total Kontak</div>
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
             <div className="text-2xl font-bold text-[#0B2C5F] mb-2">
-              {contactData.submissions.filter(s => s.email).length}
+              {submissions.filter(s => s.email).length}
             </div>
             <div className="text-gray-600 text-sm">Dengan Email</div>
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
             <div className="text-2xl font-bold text-purple-600 mb-2">
-              {contactData.submissions.filter(s => 
-                new Date(s.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+              {submissions.filter(s => 
+                new Date(s.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
               ).length}
             </div>
             <div className="text-gray-600 text-sm">7 Hari Terakhir</div>

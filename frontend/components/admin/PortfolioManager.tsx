@@ -5,32 +5,32 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, Building } from 'lucide-react';
-import backend from '~backend/client';
-import type { PortfolioProject, CreatePortfolioRequest, UpdatePortfolioRequest } from '~backend/cms/portfolio';
+import { getPortfolioProjects, createPortfolioProject, updatePortfolioProject, deletePortfolioProject } from '../../lib/portfolio';
+import type { PortfolioProject } from '../../lib/supabase';
 
 const PortfolioManager = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
-  const [formData, setFormData] = useState<CreatePortfolioRequest>({
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
-    imageUrl: '',
-    projectType: '',
-    clientName: '',
-    completionDate: undefined,
-    cameraCount: undefined
+    image_url: '',
+    project_type: '',
+    client_name: '',
+    completion_date: '',
+    camera_count: 0
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: portfolioData, isLoading } = useQuery({
+  const { data: projects = [], isLoading } = useQuery({
     queryKey: ['admin-portfolio'],
-    queryFn: () => backend.cms.listPortfolioProjects(),
+    queryFn: getPortfolioProjects,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreatePortfolioRequest) => backend.cms.createPortfolioProject(data),
+    mutationFn: createPortfolioProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-portfolio'] });
       resetForm();
@@ -43,7 +43,7 @@ const PortfolioManager = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdatePortfolioRequest) => backend.cms.updatePortfolioProject(data),
+    mutationFn: ({ id, ...data }: { id: number } & Partial<PortfolioProject>) => updatePortfolioProject(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-portfolio'] });
       resetForm();
@@ -56,7 +56,7 @@ const PortfolioManager = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => backend.cms.deletePortfolioProject({ id }),
+    mutationFn: deletePortfolioProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-portfolio'] });
       toast({ title: "Sukses", description: "Proyek berhasil dihapus" });
@@ -71,11 +71,11 @@ const PortfolioManager = () => {
     setFormData({
       title: '',
       description: '',
-      imageUrl: '',
-      projectType: '',
-      clientName: '',
-      completionDate: undefined,
-      cameraCount: undefined
+      image_url: '',
+      project_type: '',
+      client_name: '',
+      completion_date: '',
+      camera_count: 0
     });
     setIsCreating(false);
     setEditingProject(null);
@@ -83,26 +83,24 @@ const PortfolioManager = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    let processedValue: any = value;
-    
-    if (name === 'cameraCount') {
-      processedValue = value === '' ? undefined : parseInt(value);
-    } else if (name === 'completionDate') {
-      processedValue = value === '' ? undefined : new Date(value);
-    }
-    
     setFormData(prev => ({
       ...prev,
-      [name]: processedValue
+      [name]: name === 'camera_count' ? parseInt(value) || 0 : value
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const submitData = {
+      ...formData,
+      camera_count: formData.camera_count || undefined,
+      completion_date: formData.completion_date || undefined
+    };
+    
     if (editingProject) {
-      updateMutation.mutate({ ...formData, id: editingProject.id });
+      updateMutation.mutate({ id: editingProject.id, ...submitData });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -111,27 +109,22 @@ const PortfolioManager = () => {
     setFormData({
       title: project.title,
       description: project.description || '',
-      imageUrl: project.imageUrl || '',
-      projectType: project.projectType,
-      clientName: project.clientName || '',
-      completionDate: project.completionDate || undefined,
-      cameraCount: project.cameraCount || undefined
+      image_url: project.image_url || '',
+      project_type: project.project_type,
+      client_name: project.client_name || '',
+      completion_date: project.completion_date || '',
+      camera_count: project.camera_count || 0
     });
     setIsCreating(true);
   };
 
-  const formatDate = (date: Date | null | undefined) => {
+  const formatDate = (date: string | null | undefined) => {
     if (!date) return '';
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     }).format(new Date(date));
-  };
-
-  const formatDateForInput = (date: Date | null | undefined) => {
-    if (!date) return '';
-    return new Date(date).toISOString().split('T')[0];
   };
 
   return (
@@ -177,8 +170,8 @@ const PortfolioManager = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Tipe Proyek</label>
               <select
-                name="projectType"
-                value={formData.projectType}
+                name="project_type"
+                value={formData.project_type}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 required
@@ -196,8 +189,8 @@ const PortfolioManager = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Nama Klien</label>
               <Input
-                name="clientName"
-                value={formData.clientName}
+                name="client_name"
+                value={formData.client_name}
                 onChange={handleInputChange}
               />
             </div>
@@ -205,9 +198,9 @@ const PortfolioManager = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Jumlah Kamera</label>
               <Input
-                name="cameraCount"
+                name="camera_count"
                 type="number"
-                value={formData.cameraCount || ''}
+                value={formData.camera_count}
                 onChange={handleInputChange}
                 min="1"
               />
@@ -216,9 +209,9 @@ const PortfolioManager = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Tanggal Selesai</label>
               <Input
-                name="completionDate"
+                name="completion_date"
                 type="date"
-                value={formatDateForInput(formData.completionDate)}
+                value={formData.completion_date}
                 onChange={handleInputChange}
               />
             </div>
@@ -226,9 +219,9 @@ const PortfolioManager = () => {
             <div>
               <label className="block text-sm font-medium mb-2">URL Gambar (Opsional)</label>
               <Input
-                name="imageUrl"
+                name="image_url"
                 type="url"
-                value={formData.imageUrl}
+                value={formData.image_url}
                 onChange={handleInputChange}
                 placeholder="https://example.com/image.jpg"
               />
@@ -259,9 +252,9 @@ const PortfolioManager = () => {
                 </div>
               ))}
             </div>
-          ) : portfolioData?.projects && portfolioData.projects.length > 0 ? (
+          ) : projects.length > 0 ? (
             <div className="space-y-4">
-              {portfolioData.projects.map((project) => (
+              {projects.map((project) => (
                 <div key={project.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex items-start space-x-4 flex-1">
@@ -273,18 +266,18 @@ const PortfolioManager = () => {
                         <h3 className="font-semibold text-lg">{project.title}</h3>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                           <span className="bg-[#22C55E]/10 text-[#22C55E] px-2 py-1 rounded-full text-xs">
-                            {project.projectType}
+                            {project.project_type}
                           </span>
-                          {project.cameraCount && (
-                            <span>{project.cameraCount} kamera</span>
+                          {project.camera_count && (
+                            <span>{project.camera_count} kamera</span>
                           )}
-                          {project.completionDate && (
-                            <span>{formatDate(project.completionDate)}</span>
+                          {project.completion_date && (
+                            <span>{formatDate(project.completion_date)}</span>
                           )}
                         </div>
-                        {project.clientName && (
+                        {project.client_name && (
                           <p className="text-sm text-gray-600 mt-1">
-                            Klien: {project.clientName}
+                            Klien: {project.client_name}
                           </p>
                         )}
                         {project.description && (

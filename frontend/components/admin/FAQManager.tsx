@@ -5,28 +5,28 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, GripVertical } from 'lucide-react';
-import backend from '~backend/client';
-import type { FAQ, CreateFAQRequest, UpdateFAQRequest } from '~backend/cms/faqs';
+import { getFAQs, createFAQ, updateFAQ, deleteFAQ } from '../../lib/faqs';
+import type { FAQ } from '../../lib/supabase';
 
 const FAQManager = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
-  const [formData, setFormData] = useState<CreateFAQRequest>({
+  const [formData, setFormData] = useState({
     question: '',
     answer: '',
-    orderIndex: 0
+    order_index: 0
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: faqData, isLoading } = useQuery({
+  const { data: faqs = [], isLoading } = useQuery({
     queryKey: ['admin-faqs'],
-    queryFn: () => backend.cms.listFAQs(),
+    queryFn: getFAQs,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateFAQRequest) => backend.cms.createFAQ(data),
+    mutationFn: createFAQ,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-faqs'] });
       resetForm();
@@ -39,7 +39,7 @@ const FAQManager = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateFAQRequest) => backend.cms.updateFAQ(data),
+    mutationFn: ({ id, ...data }: { id: number } & Partial<FAQ>) => updateFAQ(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-faqs'] });
       resetForm();
@@ -52,7 +52,7 @@ const FAQManager = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => backend.cms.deleteFAQ({ id }),
+    mutationFn: deleteFAQ,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-faqs'] });
       toast({ title: "Sukses", description: "FAQ berhasil dihapus" });
@@ -67,7 +67,7 @@ const FAQManager = () => {
     setFormData({
       question: '',
       answer: '',
-      orderIndex: faqData?.faqs ? faqData.faqs.length : 0
+      order_index: faqs.length
     });
     setIsCreating(false);
     setEditingFAQ(null);
@@ -77,14 +77,14 @@ const FAQManager = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'orderIndex' ? parseInt(value) || 0 : value
+      [name]: name === 'order_index' ? parseInt(value) || 0 : value
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingFAQ) {
-      updateMutation.mutate({ ...formData, id: editingFAQ.id });
+      updateMutation.mutate({ id: editingFAQ.id, ...formData });
     } else {
       createMutation.mutate(formData);
     }
@@ -95,12 +95,12 @@ const FAQManager = () => {
     setFormData({
       question: faq.question,
       answer: faq.answer,
-      orderIndex: faq.orderIndex
+      order_index: faq.order_index
     });
     setIsCreating(true);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string) => {
     return new Intl.DateTimeFormat('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -116,7 +116,7 @@ const FAQManager = () => {
           onClick={() => {
             setFormData(prev => ({
               ...prev,
-              orderIndex: faqData?.faqs ? faqData.faqs.length : 0
+              order_index: faqs.length
             }));
             setIsCreating(true);
           }}
@@ -158,9 +158,9 @@ const FAQManager = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Urutan</label>
               <Input
-                name="orderIndex"
+                name="order_index"
                 type="number"
-                value={formData.orderIndex}
+                value={formData.order_index}
                 onChange={handleInputChange}
                 min="0"
                 required
@@ -195,9 +195,9 @@ const FAQManager = () => {
                 </div>
               ))}
             </div>
-          ) : faqData?.faqs && faqData.faqs.length > 0 ? (
+          ) : faqs.length > 0 ? (
             <div className="space-y-4">
-              {faqData.faqs.map((faq) => (
+              {faqs.map((faq) => (
                 <div key={faq.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex items-start space-x-3 flex-1">
@@ -208,13 +208,13 @@ const FAQManager = () => {
                       <div className="flex-1">
                         <div className="flex items-center mb-2">
                           <span className="bg-[#0B2C5F] text-white px-2 py-1 rounded text-xs font-medium mr-3">
-                            #{faq.orderIndex}
+                            #{faq.order_index}
                           </span>
                           <h3 className="font-semibold text-lg">{faq.question}</h3>
                         </div>
                         <p className="text-gray-700 mb-2">{faq.answer}</p>
                         <p className="text-xs text-gray-400">
-                          Dibuat: {formatDate(faq.createdAt)}
+                          Dibuat: {formatDate(faq.created_at)}
                         </p>
                       </div>
                     </div>
